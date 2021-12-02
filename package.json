@@ -4,6 +4,7 @@
 	"description": "Outline XML, duh",
 	"publisher": "gegeturtle",
 	"version": "0.0.1",
+	"repository": "https://github.com/gege-labster/labster-xml-outliner/",
 	"engines": {
 		"vscode": "^1.62.0"
 	},
