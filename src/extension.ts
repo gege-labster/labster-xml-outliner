@@ -8,6 +8,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('labster-xml-outliner.refresh', () => {
 		xmlOutlineProvider.refresh();
 	}));
+	context.subscriptions.push(vscode.commands.registerCommand("labster-xml-outliner.gotoline", line => {
+		XMLOutlineProvider.select(line);
+	}));
 }
 
 export function deactivate() {}

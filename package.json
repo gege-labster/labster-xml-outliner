@@ -20,6 +20,10 @@
 			{
 				"command": "labster-xml-outliner.refresh",
 				"title": "Refresh"
+			},
+			{
+				"command": "labster-xml-outliner.gotoline",
+				"title": "Select Line"
 			}
 		],
 		"views": {
