@@ -1,27 +1,34 @@
 import * as vscode from "vscode";
-import * as XMLParser from "fast-xml-parser";
+import {DOMParser} from "xmldom";
 
 export class XMLOutlineProvider implements vscode.TreeDataProvider<EngineXML>{
-  public engine: EngineXML;
-
+  private dom;
+  private engine;
   private _onDidChangeTreeData: vscode.EventEmitter<EngineXML | undefined | null | void> = new vscode.EventEmitter<EngineXML | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<EngineXML | undefined | null | void> = this._onDidChangeTreeData.event;
 
   refresh(): void {
-    this.engine = this.parseXML();
+    this.parseXML();
     this._onDidChangeTreeData.fire();
   }
 
 
   constructor(private context: vscode.ExtensionContext) {
-    this.engine = this.parseXML();
+    let text: string;
+    if (vscode.window.activeTextEditor) {
+      text = vscode.window.activeTextEditor?.document.getText();
+    } else {
+      text = "";
+    }
+    this.dom = new DOMParser().parseFromString(text);
+    // console.log(this.dom.childNodes[0]);
+    this.engine = new EngineXML(this.dom.childNodes[0]);
     vscode.window.onDidChangeActiveTextEditor(e => this.onActiveEditorChanged(e));
     vscode.workspace.onDidChangeTextDocument(e => this.onTextChanged(e));
     this.onActiveEditorChanged(vscode.window.activeTextEditor);
   }
 
   getTreeItem(element: EngineXML): vscode.TreeItem {
-    // vscode.window.showInformationMessage('shits happen on get Tree item');
     return element;
   }
 
@@ -32,8 +39,8 @@ export class XMLOutlineProvider implements vscode.TreeDataProvider<EngineXML>{
         return Promise.resolve(element.child);
       }
     } else {
-
       let buffer: EngineXML[] = [];
+      console.log(buffer);
       buffer.push(this.engine);
       return Promise.resolve(buffer);
     }
@@ -42,29 +49,16 @@ export class XMLOutlineProvider implements vscode.TreeDataProvider<EngineXML>{
 
 
 
-  parseXML(): EngineXML {
+  parseXML(){
     let text: string;
     if (vscode.window.activeTextEditor) {
       text = vscode.window.activeTextEditor?.document.getText();
     } else {
       text = "";
     }
-
-    const option = {
-      ignoreAttributes: false,
-      allowBooleanAttributes: true,
-      preserveOrder: true,
-      attributeNamePrefix: "",
-      isArray: (name: string, jpath: string, isLeafNode: boolean, isAttribute: boolean) => {
-        if (isAttribute || isLeafNode) {
-          return false;
-        }
-        return true;
-      }
-    };
-    const parser = new XMLParser.XMLParser(option);
-    let obj = parser.parse(text)[0];
-    return new EngineXML(obj);
+    this.dom = new DOMParser().parseFromString(text);
+    // console.log(this.dom.childNodes[0]);
+    this.engine = new EngineXML(this.dom.childNodes[0]);
   }
 
   onActiveEditorChanged(editor?: vscode.TextEditor) {
@@ -87,21 +81,27 @@ export class XMLOutlineProvider implements vscode.TreeDataProvider<EngineXML>{
   }
 
 
-  static getXMLTagName(element: object): string {
-    let keys = Object.keys(element);
-    return keys[0];
+  static getXMLTagName(element: Node): string {
+    // console.log(element.nodeName);
+    return (element.nodeName);
   }
 
-  static getXMLId(element: any): string | undefined {
-    if (element.attributes === undefined) { return; }
-    return element.attributes.Id;
-  }
-
-  static getXMLChild(element: any, tagName?: string): object {
-    if (tagName !== undefined) {
-      return element[tagName];
+  static getXMLId(element: Node): string | undefined {
+    let attributeArray = (element as any).attributes;
+    if (attributeArray.length > 0) {
+      for (let i = 0; i < attributeArray.length; i++) {
+        if (attributeArray[i].nodeName === "Id") {
+          console.log("id found");
+          return attributeArray[i].nodeValue;
+        }
+        
+      }
     }
-    return element[this.getXMLTagName(element)];
+  }
+
+  static getXMLChild(element: Node): NodeListOf<ChildNode> {
+    // console.log(element.childNodes);
+    return element.childNodes;
   }
 
   activateView() {
@@ -119,29 +119,37 @@ export class XMLOutlineProvider implements vscode.TreeDataProvider<EngineXML>{
 
 class EngineXML extends vscode.TreeItem {
   public child?: EngineXML[];
-  public tagName: string;
-  public xmlId: string | undefined = undefined;
+  public tagName;
+  public xmlId;
+  public node;
+  public lineNumber: number = 0;
   constructor(
-    private element: any,
+    element: Node,
   ) {
-    super(XMLOutlineProvider.getXMLTagName(element));
-    this.tagName = XMLOutlineProvider.getXMLTagName(this.element);
-    if (XMLOutlineProvider.getXMLId(element) !== undefined) {
-      this.xmlId = XMLOutlineProvider.getXMLId(this.element);
-      this.tooltip = `${this.tagName} - ${XMLOutlineProvider.getXMLId(this.element)}`;
-      this.description = this.xmlId;
-    } else {
-      this.tooltip = `${this.tagName}`;
+    super("Placeholder");
+    this.node = element;
+    this.tagName = XMLOutlineProvider.getXMLTagName(this.node);
+    this.xmlId = XMLOutlineProvider.getXMLId(this.node);
+    
+    let childList: EngineXML[] = [];
+    let childNodes = XMLOutlineProvider.getXMLChild(this.node);
+    for (let i = 0; i < childNodes.length; i++) {
+      // console.log(childNodes[i].nodeType);
+      if (childNodes[i].nodeType === childNodes[i].ELEMENT_NODE) {
+        childList.push(new EngineXML(childNodes[i]));
+      }
     }
-    if (Array.isArray(this.element[this.tagName]) && this.element[this.tagName].length > 0) {
-      let buffer: EngineXML[] = [];
-      this.element[this.tagName].forEach(function (element: object) {
-        buffer.push(new EngineXML(element));
-      });
-      this.child = buffer;
+    if (childList.length > 0) {
+      this.child = childList;
       this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
     }
-
+    this.label = this.tagName;
+    this.description = this.xmlId;
+    if (this.description) {
+      this.tooltip = `${this.label} - ${this.description}`;
+    } else {
+      this.tooltip = `${this.label} - no id found`;
+    }
   }
 }
 
