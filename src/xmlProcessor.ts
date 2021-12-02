@@ -122,9 +122,6 @@ export class XMLOutlineProvider implements vscode.TreeDataProvider<EngineXML>{
           by: "line",
           value: distance,
         });
-        vscode.commands.executeCommand("cursorMove", {
-          to: "wrappedLineFirstNonWhitespaceCharacter",
-        });
       } else {
         editor.selection = new vscode.Selection(new vscode.Position(line, editor.document.lineAt(line).text.length), new vscode.Position(line, editor.document.lineAt(line).firstNonWhitespaceCharacterIndex));
       }
