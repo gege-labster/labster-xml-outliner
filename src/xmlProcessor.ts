@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-const xml2js = require("xml2js");
 import * as XMLParser from "fast-xml-parser";
 
 export class XMLOutlineProvider implements vscode.TreeDataProvider<EngineXML>{
@@ -18,18 +17,16 @@ export class XMLOutlineProvider implements vscode.TreeDataProvider<EngineXML>{
     this.engine = this.parseXML();
     vscode.window.onDidChangeActiveTextEditor(e => this.onActiveEditorChanged(e));
     vscode.workspace.onDidChangeTextDocument(e => this.onTextChanged(e));
-    // console.log(this.engine);
-    // console.log(obj[0]);
     this.onActiveEditorChanged(vscode.window.activeTextEditor);
   }
 
   getTreeItem(element: EngineXML): vscode.TreeItem {
-    vscode.window.showInformationMessage('shits happen on get Tree item');
+    // vscode.window.showInformationMessage('shits happen on get Tree item');
     return element;
   }
 
   getChildren(element?: EngineXML): Thenable<EngineXML[]> {
-    vscode.window.showInformationMessage('shits happen on get Children');
+    // vscode.window.showInformationMessage('shits happen on get Children');
     if (element) {
       if (element.child) {
         return Promise.resolve(element.child);

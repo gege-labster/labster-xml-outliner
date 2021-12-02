@@ -11,17 +11,12 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:labster-xml-outliner.helloWorld",
 		"onLanguage:xml",
 		"onView:labsterXMLOutline"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
-			{
-				"command": "labster-xml-outliner.helloWorld",
-				"title": "Hello World"
-			},
 			{
 				"command": "labster-xml-outliner.refresh",
 				"title": "Refresh"
@@ -48,7 +43,6 @@
 	"devDependencies": {
 		"@types/glob": "^7.1.4",
 		"@types/mocha": "^9.0.0",
-		"@types/vscode": "^1.62.0",
 		"@typescript-eslint/eslint-plugin": "^5.1.0",
 		"@typescript-eslint/parser": "^5.1.0",
 		"@vscode/test-electron": "^1.6.2",
@@ -59,6 +53,7 @@
 		"xml2js": "^0.4.23"
 	},
 	"dependencies": {
+		"@types/vscode": "^1.62.0",
 		"fast-xml-parser": "^4.0.0-beta.3",
 		"path": "^0.12.7"
 	}
